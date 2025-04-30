@@ -259,7 +259,7 @@ impl<T: Serialize> StoreCfg<Json<T>> {
     /// - If the data cannot be serialized to JSON.
     /// - If the file cannot be opened or written to.
     /// - If the file cannot be flushed.
-    pub fn store(&mut self, tstamp: DateTime<Utc>, data: T) -> Result<&Path, std::io::Error>
+    pub fn store(&mut self, tstamp: DateTime<Utc>, data: &T) -> Result<&Path, std::io::Error>
     where
         T: serde::Serialize,
     {

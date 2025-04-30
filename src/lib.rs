@@ -1,5 +1,4 @@
 #![deny(missing_docs)]
-#![cfg_attr(docsrs, feature(doc_cfg))]
 
 //! Crate to store binary or JSON-serializable data frames into files.
 //!
@@ -55,12 +54,12 @@ mod tests {
             .store(now + Duration::hours(25), data.as_ref())
             .unwrap();
         let mut store = StoreCfg::<Json<&[u8]>>::new("test".into(), true, "testprogram").unwrap();
-        let _ = store.store(now, data.as_ref()).unwrap();
+        let _ = store.store(now, &data.as_ref()).unwrap();
         let _ = store
-            .store(now + Duration::hours(2), data.as_ref())
+            .store(now + Duration::hours(2), &data.as_ref())
             .unwrap();
         let _ = store
-            .store(now + Duration::hours(25), data.as_ref())
+            .store(now + Duration::hours(25), &data.as_ref())
             .unwrap();
         std::fs::remove_dir_all("test").unwrap_or_default();
     }
@@ -71,12 +70,12 @@ mod tests {
         let data = "Hello\nworld".to_string();
         let mut store = StoreCfg::<Json<&str>>::new("test".into(), true, "testprogram").unwrap();
         let now = Utc::now();
-        let _ = store.store(now, data.as_ref()).unwrap();
+        let _ = store.store(now, &data.as_str()).unwrap();
         let _ = store
-            .store(now + Duration::hours(2), data.as_ref())
+            .store(now + Duration::hours(2), &data.as_str())
             .unwrap();
         let _ = store
-            .store(now + Duration::hours(25), data.as_ref())
+            .store(now + Duration::hours(25), &data.as_str())
             .unwrap();
         std::fs::remove_dir_all("test").unwrap_or_default();
     }
