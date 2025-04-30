@@ -21,8 +21,8 @@ of the frames are as follows:
 - Offset 0: `FRME`
 - Offset 4: <Size of the frame, minus the magic, in [u32] LE format>
 - Offset 8: <Size of the payload, in [u32] LE format>
-- Offset 12: Data segment, length N, M = N + N % 4
-- Offset (12 + N): Padding bytes 0xFF, N % 4 bytes
+- Offset 12: Data segment, length `N`, `M = N + (4 - N % 4)`
+- Offset (12 + N): Padding bytes `0xFF`, `(4 - N % 4)` bytes
 - Offset (12 + M): `FRME`
 
 The first data frame in the file is always a header frame. The header
