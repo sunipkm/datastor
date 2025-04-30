@@ -29,3 +29,15 @@ The first data frame in the file is always a header frame. The header
 is an ASCII encoded description of the binary data format, as well as
 the binary version of the data format and the program that created the
 file.
+
+## Usage
+```rust,no_run
+use datastor::{StoreCfg, Binary, Json};
+use chrono::{Utc, Duration};
+let mut store = StoreCfg::<Binary>::new("test".into(), true, "testprogram").unwrap();
+let data = vec![1, 2, 3, 4, 5];
+let now = Utc::now();
+let _ = store.store(now, data.as_ref()).unwrap(); // first frame
+let _ = store.store(now + Duration::hours(2), data.as_ref()).unwrap(); // second frame
+let _ = store.store(now + Duration::hours(25), data.as_ref()).unwrap(); // third frame, this will trigger a compression event
+```

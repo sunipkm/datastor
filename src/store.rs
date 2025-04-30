@@ -255,6 +255,9 @@ impl<T: Serialize> StoreCfg<Json<T>> {
     /// - `tstamp`: Timestamp of the data frame, used to determine hourly and daily boundaries.
     /// - `data`: Data to be stored, must implement [serde::Serialize].
     ///
+    /// # Output:
+    /// - Returns the path to the file where the data was stored.
+    /// 
     /// # Errors:
     /// - If the data cannot be serialized to JSON.
     /// - If the file cannot be opened or written to.
@@ -279,6 +282,9 @@ impl StoreCfg<Binary> {
     /// # Arguments:
     /// - `tstamp`: Timestamp of the data frame, used to determine hourly and daily boundaries.
     /// - `data`: Data to be stored, must be a byte slice.
+    /// 
+    /// # Output:
+    /// - Returns the path to the file where the data was stored.
     ///
     /// # Errors:
     /// - If the data is too large (greater than 4 GiB).
