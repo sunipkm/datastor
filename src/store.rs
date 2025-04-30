@@ -311,8 +311,8 @@ where
             "Frame size too large",
         ))?;
     debug_assert!(
-        frame_size % size_of::<u32>() as u32 == 0,
-        "Frame size {frame_size} is not 4-byte aligned: {data_size} + {padding}"
+        frame_size % BINARY_ALIGN == 0,
+        "Frame size {frame_size} is not {BINARY_ALIGN}-byte aligned: {data_size} + {padding}"
     );
     writer.write_all(BINARY_FRAME_START)?; // write frame start
     writer.write_all(&frame_size.to_le_bytes())?; // write frame size
