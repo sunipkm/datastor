@@ -32,9 +32,9 @@ file.
 
 ## Usage
 ```rust,no_run
-use datastor::{StoreCfg, Binary, Json};
+use datastor::{UtcHourly, Binary, Json};
 use chrono::{Utc, Duration};
-let mut store = StoreCfg::<Binary>::new("test".into(), true, "testprogram").unwrap();
+let mut store = UtcHourly::<Binary>::new("test".into(), true, "testprogram").unwrap();
 let data = vec![1, 2, 3, 4, 5];
 let now = Utc::now();
 let _ = store.store(now, data.as_ref()).unwrap(); // first frame
