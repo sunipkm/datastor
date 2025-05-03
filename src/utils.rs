@@ -255,9 +255,6 @@ pub(crate) fn get_lock(rootdir: &Path, hash: u64) -> Result<PathBuf, std::io::Er
 
 pub(crate) fn find_max_iter(rootdir: &str, extsep: Option<&OsStr>) -> Result<u64, std::io::Error> {
     let mut max_iter = 0;
-    let glob = globset::Glob::new(&format!("{rootdir}/\\d+"))
-        .expect("Invalid glob pattern")
-        .compile_matcher();
     let mut entries = std::fs::read_dir(rootdir)?
         .filter_map(|entry| entry.ok()) // remove errors
         .filter(|entry| {
