@@ -5,7 +5,8 @@ use std::{
     io::Write,
     path::{Path, PathBuf},
     sync::{mpsc, Arc, Mutex},
-    thread::{self, JoinHandle}, time::Instant,
+    thread::{self, JoinHandle},
+    time::Instant,
 };
 
 use chrono::{DateTime, Utc};
@@ -20,6 +21,7 @@ pub(crate) trait UtcHourlyBoundary: UtcDailyBoundary {
     fn check_time_utchourly<Kind: FmtInfo>(
         &mut self,
         tstamp: DateTime<Utc>,
+        single: bool,
     ) -> Result<CheckedFileName, std::io::Error> {
         let date = tstamp.format("%Y%m%d").to_string();
         let hour = tstamp.format("%H").to_string();
@@ -36,8 +38,12 @@ pub(crate) trait UtcHourlyBoundary: UtcDailyBoundary {
         }
         if self.get_last_hour() != Some(&hour) {
             let current_dir = self.get_current_dir();
-            let filename =
-                current_dir.join(format!("{}{}0000.{}", &date, &hour, Kind::extension()));
+            let filename = if single {
+                let hour = tstamp.format("%H%M%S.%f").to_string();
+                current_dir.join(format!("{}{}.{}", &date, &hour, Kind::extension()))
+            } else {
+                current_dir.join(format!("{}{}0000.{}", &date, &hour, Kind::extension()))
+            };
             if filename.exists() {
                 return Ok(CheckedFileName::Old(filename));
             } else {
@@ -64,6 +70,7 @@ pub(crate) trait UtcDailyBoundary {
     fn check_time_utcdaily<Kind: FmtInfo>(
         &mut self,
         tstamp: DateTime<Utc>,
+        single: bool,
     ) -> Result<CheckedFileName, std::io::Error> {
         let date = tstamp.format("%Y%m%d").to_string();
         if self.get_last_date() != Some(&date) {
@@ -72,10 +79,14 @@ pub(crate) trait UtcDailyBoundary {
                 let _ = tx.send(Some(self.get_current_dir().clone()));
             }
         }
-
+        let hour = tstamp.format("%H%M%S.%f").to_string();
         let current_dir = self.get_root_dir().join(&date);
         std::fs::create_dir_all(&current_dir)?;
-        let filename = current_dir.join(format!("{}000000.{}", &date, Kind::extension()));
+        let filename = if single {
+            current_dir.join(format!("{}{}.{}", &date, hour, Kind::extension()))
+        } else {
+            current_dir.join(format!("{}000000.{}", &date, Kind::extension()))
+        };
         self.set_current_dir(current_dir);
         self.set_last_date(Some(date.clone()));
         if filename.exists() {
@@ -83,68 +94,13 @@ pub(crate) trait UtcDailyBoundary {
         } else {
             return Ok(CheckedFileName::New(filename));
         };
-        
+
         Err(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
             "Invalid time",
         ))
     }
 }
-
-// pub(crate) trait DailyBoundary {
-//     fn get_last_date(&mut self) -> Option<&Instant>;
-//     fn set_last_date(&mut self, date: Option<Instant>);
-//     fn get_current_dir(&mut self) -> &PathBuf;
-//     fn set_current_dir(&mut self, dir: PathBuf);
-//     fn get_root_dir(&mut self) -> &PathBuf;
-//     fn get_compressor(&mut self) -> Option<mpsc::Sender<Option<PathBuf>>>;
-//     fn get_writer(&mut self) -> Option<&mut Box<dyn Write>>;
-//     fn set_writer(&mut self, writer: Option<Box<dyn Write>>);
-//     fn check_time_daily<Kind: FmtInfo>(
-//         &mut self,
-//         tstamp: Instant,
-//     ) -> Result<CheckedFileName, std::io::Error> {
-//         if let Some(last_date) = self.get_last_date() {
-//             let dur = tstamp.duration_since(*last_date);
-//             if dur.as_secs() > 24 * 60 * 60 {
-//                 // Send the last directory to the compression thread
-//                 if let Some(tx) = &self.get_compressor() {
-//                     let _ = tx.send(Some(self.get_current_dir().clone()));
-//                 }
-//             }
-//             let current_dir = self.get_root_dir().join()
-//         }
-//         if self.get_last_date() != Some(&date) {
-//             // Send the last directory to the compression thread
-//             if let Some(tx) = &self.get_compressor() {
-//                 let _ = tx.send(Some(self.get_current_dir().clone()));
-//             }
-//             let current_dir = self.get_root_dir().join(&date);
-//             std::fs::create_dir_all(&current_dir)?;
-//             let filename = current_dir.join(format!("{}0000.{}", &date, Kind::extension()));
-//             self.set_current_dir(current_dir);
-//             self.set_last_date(Some(date.clone()));
-//             if filename.exists() {
-//                 return Ok(CheckedFileName::Old(filename));
-//             } else {
-//                 return Ok(CheckedFileName::New(filename));
-//             };
-//         }
-//         Err(std::io::Error::new(
-//             std::io::ErrorKind::InvalidInput,
-//             "Invalid time",
-//         ))
-//     }
-// }
-
-// pub(crate) trait HourlyBoundary: DailyBoundary {
-//     fn get_last_hour(&mut self) -> Option<&Instant>;
-//     fn set_last_hour(&mut self, hour: Option<Instant>);
-//     fn check_time_hourly(
-//         &mut self,
-//         tstamp: DateTime<Utc>,
-//     ) -> Result<CheckedFileName, std::io::Error>;
-// }
 
 #[derive(Debug, Clone)]
 pub(crate) enum CheckedFileName {
@@ -295,4 +251,41 @@ pub(crate) fn get_lock(rootdir: &Path, hash: u64) -> Result<PathBuf, std::io::Er
         file.sync_all()?;
     }
     Ok(lockfile)
+}
+
+pub(crate) fn find_max_iter(rootdir: &str, extsep: Option<&OsStr>) -> Result<u64, std::io::Error> {
+    let mut max_iter = 0;
+    let glob = globset::Glob::new(&format!("{rootdir}/\\d+"))
+        .expect("Invalid glob pattern")
+        .compile_matcher();
+    let mut entries = std::fs::read_dir(rootdir)?
+        .filter_map(|entry| entry.ok()) // remove errors
+        .filter(|entry| {
+            if extsep.is_none() {
+                // if no extension, then only directories
+                entry.path().is_dir()
+            } else {
+                // if extension is given, then only files with that extension
+                entry.path().is_file() && entry.path().extension() == extsep
+            }
+        })
+        .filter_map(|entry| {
+            entry
+                .path()
+                .file_stem() // get the file stem, which is the name without the extension
+                .and_then(|x| x.to_owned().into_string().ok()) // convert to string
+        })
+        .filter_map(|x| x.parse::<_>().ok()) // parse the string as a u64
+        .collect::<Vec<_>>(); // collect the results into a vector
+    if entries.is_empty() {
+        // if no entries found
+        // return 0
+        return Ok(0);
+    }
+    // sort the entries in descending order
+    entries.sort();
+    // reverse the order to get the maximum
+    entries.reverse();
+    // get the maximum value
+    Ok(entries[0]) // Safety: entries is not empty
 }

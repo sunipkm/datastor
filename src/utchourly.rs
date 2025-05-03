@@ -193,7 +193,7 @@ impl<T: Serialize> UtcHourly<Json<T>> {
     where
         T: serde::Serialize,
     {
-        let filename = self.check_time_utchourly::<Json<T>>(tstamp)?;
+        let filename = self.check_time_utchourly::<Json<T>>(tstamp, false)?;
         let writer = self.get_writer_checked(&filename)?;
         serde_json::to_writer(writer.by_ref(), &data)
             .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
@@ -219,7 +219,7 @@ impl UtcHourly<Binary> {
     /// - If the file cannot be opened or written to.
     /// - If the file cannot be flushed.
     pub fn store(&mut self, tstamp: DateTime<Utc>, data: &[u8]) -> Result<PathBuf, std::io::Error> {
-        let filename = self.check_time_utchourly::<Binary>(tstamp)?;
+        let filename = self.check_time_utchourly::<Binary>(tstamp, false)?;
         let writer = self.get_writer_checked(&filename)?;
         store_binary(writer, data)?;
         Ok(filename.into())
