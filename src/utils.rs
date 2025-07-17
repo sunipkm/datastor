@@ -12,7 +12,9 @@ use std::{
 use chrono::{DateTime, Utc};
 use flate2::{write::GzEncoder, Compression};
 
-use crate::FmtInfo;
+use cfg_if::cfg_if;
+
+use crate::{lock::LockFile, FmtInfo};
 
 pub(crate) trait UtcHourlyBoundary: UtcDailyBoundary {
     fn get_last_hour(&mut self) -> Option<&str>;
@@ -234,23 +236,9 @@ pub(crate) fn compressor(rx: mpsc::Receiver<Option<PathBuf>>) -> JoinHandle<()> 
     })
 }
 
-pub(crate) fn get_lock(rootdir: &Path, hash: u64) -> Result<PathBuf, std::io::Error> {
+pub(crate) fn get_lock(rootdir: &Path, hash: u64) -> Result<LockFile, std::io::Error> {
     let lockfile = rootdir.join(format!("{:016x}.lock", hash));
-    if lockfile.exists() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::AlreadyExists,
-            format!("Lock file already exists: {:?}", lockfile),
-        ));
-    } else {
-        let mut file = OpenOptions::new()
-            .create_new(true)
-            .write(true)
-            .open(&lockfile)?;
-        file.write_all(b"LOCK")?;
-        file.flush()?;
-        file.sync_all()?;
-    }
-    Ok(lockfile)
+    LockFile::new(lockfile)
 }
 
 pub(crate) fn find_max_iter(rootdir: &str, extsep: Option<&OsStr>) -> Result<u64, std::io::Error> {

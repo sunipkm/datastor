@@ -1,5 +1,9 @@
-use std::{hash::{DefaultHasher, Hash, Hasher}, io::Write, marker::PhantomData};
 use serde::Serialize;
+use std::{
+    hash::{DefaultHasher, Hash, Hasher},
+    io::Write,
+    marker::PhantomData,
+};
 
 #[allow(unused_imports)]
 use crate::UtcHourly;

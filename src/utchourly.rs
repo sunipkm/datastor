@@ -12,6 +12,7 @@ use chrono::{DateTime, Utc};
 
 use crate::{
     formats::{store_binary, FmtInfo},
+    lock::LockFile,
     utils::{get_compressor, get_lock, CheckedFileName, UtcDailyBoundary, UtcHourlyBoundary},
     Binary, Json,
 };
@@ -23,10 +24,6 @@ impl<T> Drop for UtcHourly<T> {
                 let _ = tx.send(None);
                 let _ = hdl.join();
             }
-        }
-        let lock = self.lock.as_path();
-        if lock.exists() {
-            let _ = std::fs::remove_file(lock);
         }
     }
 }
@@ -66,7 +63,7 @@ pub struct UtcHourly<Kind> {
     compress_hdl: Option<thread::JoinHandle<()>>,
     writer: Option<Box<dyn Write>>,
     progname: &'static str,
-    lock: PathBuf,
+    _lock: LockFile,
     _marker: PhantomData<Kind>,
 }
 
@@ -101,7 +98,7 @@ impl<Kind: FmtInfo> UtcHourly<Kind> {
             compress_tx,
             compress_hdl,
             progname,
-            lock,
+            _lock: lock,
             _marker: PhantomData,
         })
     }

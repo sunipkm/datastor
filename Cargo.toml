@@ -1,9 +1,10 @@
 [package]
 name = "datastor"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 
 [dependencies]
+cfg-if = "1.0"
 chrono = { version = "0.4", default-features = false, features = ["std"] }
 flate2 = "1"
 lazy_static = "1.5"
@@ -18,3 +19,10 @@ chrono = { version = "0.4", default-features = false, features = [
     "std",
     "clock",
 ] }
+
+[target.'cfg(windows)'.dependencies.windows-sys]
+version = ">=0.52.0, <0.60.0"
+features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_IO"]
+
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "1.0.0", features = ["fs"] }

@@ -252,21 +252,21 @@ impl<Kind: FmtInfo> ExecCountSingleFrame<Kind> {
     pub fn new(root_dir: &str) -> Result<Self, std::io::Error> {
         std::fs::create_dir_all(root_dir)?;
         let runcount1 = (find_max_iter(root_dir, None)? as u32)
-        .checked_add(1)
-        .ok_or({
-            std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Failed to increment run count",
-            )
-        })?;
+            .checked_add(1)
+            .ok_or({
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Failed to increment run count",
+                )
+            })?;
         let runcount2 = (find_max_iter(root_dir, Some(OsStr::new("gz")))? as u32)
-        .checked_add(1)
-        .ok_or({
-            std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Failed to increment run count",
-            )
-        })?;
+            .checked_add(1)
+            .ok_or({
+                std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Failed to increment run count",
+                )
+            })?;
         let runcount = runcount1.max(runcount2);
         let root_dir = PathBuf::from(root_dir).join(format!("{runcount:0>10}"));
         std::fs::create_dir_all(&root_dir)?;
@@ -545,7 +545,7 @@ mod test {
         store
             .store(now + Duration::hours(26), data.as_ref())
             .unwrap(); // fourth frame
-                       std::fs::remove_dir_all(dir).unwrap_or_default();
+        std::fs::remove_dir_all(dir).unwrap_or_default();
     }
 
     #[test]
@@ -558,7 +558,7 @@ mod test {
         store.store(data.as_ref()).unwrap(); // second frame
         store.store(data.as_ref()).unwrap(); // third frame
         store.store(data.as_ref()).unwrap(); // fourth frame
-                                             std::fs::remove_dir_all(dir).unwrap_or_default();
+        std::fs::remove_dir_all(dir).unwrap_or_default();
     }
 
     #[test]
@@ -579,6 +579,6 @@ mod test {
         store
             .store(&Duration::from_secs(86400 + 7200), &data)
             .unwrap(); // sixth frame
-                       std::fs::remove_dir_all(dir).unwrap_or_default();
+        std::fs::remove_dir_all(dir).unwrap_or_default();
     }
 }

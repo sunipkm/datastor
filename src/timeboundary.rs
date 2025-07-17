@@ -365,7 +365,9 @@ mod tests {
         store.store(&Duration::from_secs(60), &42).unwrap(); // after a minute
         store.store(&Duration::from_secs(3600), &42).unwrap(); // after an hour
         store.store(&Duration::from_secs(86400), &42).unwrap(); // after a day
-        store.store(&Duration::from_secs(86400 + 3600), &42).unwrap(); // after a day and an hour
+        store
+            .store(&Duration::from_secs(86400 + 3600), &42)
+            .unwrap(); // after a day and an hour
         std::fs::remove_dir_all(dir).unwrap_or_default();
     }
 
@@ -377,7 +379,9 @@ mod tests {
         store.store(&Duration::from_secs(60), &42).unwrap(); // after a minute
         store.store(&Duration::from_secs(3600), &42).unwrap(); // after an hour
         store.store(&Duration::from_secs(86400), &42).unwrap(); // after a day
-        store.store(&Duration::from_secs(86400 + 3600), &42).unwrap(); // after a day and an hour
+        store
+            .store(&Duration::from_secs(86400 + 3600), &42)
+            .unwrap(); // after a day and an hour
         std::fs::remove_dir_all(dir).unwrap_or_default();
     }
 }

@@ -2,13 +2,14 @@
 #![doc = include_str!("../README.md")]
 
 mod formats;
-mod utchourly;
-mod utcdaily;
+mod lock;
 mod singleframe;
-mod utils;
 mod timeboundary;
-pub use formats::{Binary, Json, FmtInfo, BINARY_VERSION};
-pub use utchourly::UtcHourly;
-pub use utcdaily::UtcDaily;
-pub use singleframe::{UtcSingleFrame, ExecCountSingleFrame, ExecCountDailySingleFrame};
+mod utcdaily;
+mod utchourly;
+mod utils;
+pub use formats::{Binary, FmtInfo, Json, BINARY_VERSION};
+pub use singleframe::{ExecCountDailySingleFrame, ExecCountSingleFrame, UtcSingleFrame};
 pub use timeboundary::{ExecCountDaily, ExecCountHourly};
+pub use utcdaily::UtcDaily;
+pub use utchourly::UtcHourly;

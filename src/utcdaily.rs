@@ -1,5 +1,6 @@
 use crate::{
     formats::store_binary,
+    lock::LockFile,
     utils::{get_compressor, get_lock, CheckedFileName, UtcDailyBoundary},
     Binary, FmtInfo, Json,
 };
@@ -48,7 +49,7 @@ pub struct UtcDaily<Kind> {
     compress_hdl: Option<thread::JoinHandle<()>>,
     writer: Option<Box<dyn Write>>,
     progname: &'static str,
-    lock: PathBuf,
+    _lock: LockFile,
     _marker: PhantomData<Kind>,
 }
 
@@ -59,10 +60,6 @@ impl<Kind> Drop for UtcDaily<Kind> {
                 let _ = tx.send(None);
                 let _ = hdl.join();
             }
-        }
-        let lock = self.lock.as_path();
-        if lock.exists() {
-            let _ = std::fs::remove_file(lock);
         }
     }
 }
@@ -97,7 +94,7 @@ impl<Kind: FmtInfo> UtcDaily<Kind> {
             compress_tx,
             compress_hdl,
             progname,
-            lock,
+            _lock: lock,
             _marker: PhantomData,
         })
     }
