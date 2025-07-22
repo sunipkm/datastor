@@ -8,7 +8,7 @@ mod timeboundary;
 mod utcdaily;
 mod utchourly;
 mod utils;
-pub use formats::{Binary, FmtInfo, Json, BINARY_VERSION};
+pub use formats::{Binary, FmtInfo, Json, Raw, BINARY_VERSION};
 pub use singleframe::{ExecCountDailySingleFrame, ExecCountSingleFrame, UtcSingleFrame};
 pub use timeboundary::{ExecCountDaily, ExecCountHourly};
 pub use utcdaily::UtcDaily;
