@@ -2,7 +2,7 @@ use crate::{
     formats::store_binary,
     lock::LockFile,
     utils::{get_compressor, get_lock, CheckedFileName, UtcDailyBoundary},
-    Binary, FmtInfo, Json,
+    Binary, FmtInfo, Json, Raw,
 };
 use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
@@ -204,6 +204,30 @@ impl<T: Serialize> UtcDaily<Json<T>> {
         serde_json::to_writer(writer.by_ref(), &data)
             .map_err(|err| std::io::Error::new(std::io::ErrorKind::InvalidInput, err))?;
         writer.write_all(Json::<T>::delimiter())?;
+        writer.flush()?;
+        Ok(filename.into())
+    }
+}
+
+impl UtcDaily<Raw> {
+    #[must_use = "Errors must be handled"]
+    /// Store data without any delimiters.
+    /// 
+    /// # Arguments:
+    /// - `tstamp`: Timestamp of the data frame, used to determine hourly and daily boundaries.
+    /// - `data`: Data to be stored.
+    ///
+    /// # Output:
+    /// - Returns the path to the file where the data was stored.
+    ///
+    /// # Errors:
+    /// - If the data cannot be serialized to JSON.
+    /// - If the file cannot be opened or written to.
+    /// - If the file cannot be flushed.
+    pub fn store(&mut self, tstamp: DateTime<Utc>, data: &[u8]) -> Result<PathBuf, std::io::Error> {
+        let filename = self.check_time_utcdaily::<Raw>(tstamp, false)?;
+        let writer = self.get_writer_checked(&filename)?;
+        writer.write_all(data)?;
         writer.flush()?;
         Ok(filename.into())
     }
