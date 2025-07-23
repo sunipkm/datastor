@@ -116,11 +116,11 @@ impl<Kind: FmtInfo> UtcDailyBoundary for UtcSingleFrame<Kind> {
         self.compress_tx.clone()
     }
 
-    fn get_writer(&mut self) -> Option<&mut Box<dyn Write>> {
+    fn get_writer(&mut self) -> Option<&mut File> {
         None
     }
 
-    fn set_writer(&mut self, _writer: Option<Box<dyn Write>>) {
+    fn set_writer(&mut self, _writer: Option<File>) {
         // No-op
     }
 }

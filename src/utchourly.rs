@@ -1,11 +1,7 @@
 use lazy_static::lazy_static;
 use serde::Serialize;
 use std::{
-    io::Write,
-    marker::PhantomData,
-    path::PathBuf,
-    sync::{mpsc, Arc, Mutex},
-    thread,
+    fs::File, io::Write, marker::PhantomData, path::PathBuf, sync::{mpsc, Arc, Mutex}, thread
 };
 
 use chrono::{DateTime, Utc};
@@ -61,7 +57,7 @@ pub struct UtcHourly<Kind> {
     last_hour: Option<String>,
     compress_tx: Option<mpsc::Sender<Option<PathBuf>>>,
     compress_hdl: Option<thread::JoinHandle<()>>,
-    writer: Option<Box<dyn Write>>,
+    writer: Option<File>,
     progname: &'static str,
     _lock: LockFile,
     _marker: PhantomData<Kind>,
@@ -106,12 +102,12 @@ impl<Kind: FmtInfo> UtcHourly<Kind> {
     fn get_writer_checked(
         &mut self,
         filename: &CheckedFileName,
-    ) -> Result<&mut Box<dyn Write>, std::io::Error> {
+    ) -> Result<&mut File, std::io::Error> {
         if !filename.exists() {
             let writer = filename
                 .clone()
                 .get_writer_with_init(Kind::initialize, self.progname)?;
-            self.set_writer(Some(Box::new(writer)));
+            self.set_writer(Some(writer));
         }
         let writer = match self.writer.take() {
             Some(writer) => writer,
@@ -119,7 +115,7 @@ impl<Kind: FmtInfo> UtcHourly<Kind> {
                 let writer = filename
                     .clone()
                     .get_writer_with_init(Kind::initialize, self.progname)?;
-                Box::new(writer)
+                writer
             }
         };
         self.set_writer(Some(writer));
@@ -152,11 +148,11 @@ impl<Kind: FmtInfo> UtcDailyBoundary for UtcHourly<Kind> {
         self.last_date = date;
     }
 
-    fn get_writer(&mut self) -> Option<&mut Box<dyn Write>> {
+    fn get_writer(&mut self) -> Option<&mut File> {
         self.writer.as_mut()
     }
 
-    fn set_writer(&mut self, writer: Option<Box<dyn Write>>) {
+    fn set_writer(&mut self, writer: Option<File>) {
         self.writer = writer;
     }
 }

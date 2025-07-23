@@ -66,8 +66,8 @@ pub(crate) trait UtcDailyBoundary {
     fn set_current_dir(&mut self, dir: PathBuf);
     fn get_root_dir(&mut self) -> &PathBuf;
     fn get_compressor(&mut self) -> Option<mpsc::Sender<Option<PathBuf>>>;
-    fn get_writer(&mut self) -> Option<&mut Box<dyn Write>>;
-    fn set_writer(&mut self, writer: Option<Box<dyn Write>>);
+    fn get_writer(&mut self) -> Option<&mut File>;
+    fn set_writer(&mut self, writer: Option<File>);
 
     fn check_time_utcdaily<Kind: FmtInfo>(
         &mut self,
