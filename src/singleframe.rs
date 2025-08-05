@@ -166,7 +166,7 @@ impl<T: Serialize> UtcSingleFrame<Json<T>> {
         if filename.exists() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::AlreadyExists,
-                format!("File already exists: {:?}", filename),
+                format!("File already exists: {filename:?}"),
             ));
         }
         let mut writer = File::create(filename.get_filename())?;
@@ -198,7 +198,7 @@ impl UtcSingleFrame<Binary> {
         if filename.exists() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::AlreadyExists,
-                format!("File already exists: {:?}", filename),
+                format!("File already exists: {filename:?}"),
             ));
         }
         let writer = File::create(filename.get_filename())?;
@@ -224,7 +224,7 @@ impl<T: FmtInfo> UtcSingleFrame<T> {
         if filename.exists() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::AlreadyExists,
-                format!("File already exists: {:?}", filename),
+                format!("File already exists: {filename:?}"),
             ));
         }
         Ok(filename.into())
@@ -298,7 +298,7 @@ impl<Kind: FmtInfo> ExecCountSingleFrame<Kind> {
         if filename.exists() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::AlreadyExists,
-                format!("File already exists: {:?}", filename),
+                format!("File already exists: {filename:?}"),
             ));
         }
         Ok(filename)
@@ -411,12 +411,10 @@ impl<Kind: FmtInfo> ExecCountDailySingleFrame<Kind> {
         let filename =
             self.last_dir
                 .join(format!("{:0>10}.{}", self.framecount, Kind::extension()));
-        println!("Directory: {:?}", self.last_dir);
-        println!("Filename: {:?}", filename);
         if filename.exists() {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::AlreadyExists,
-                format!("File already exists: {:?}", filename),
+                format!("File already exists: {filename:?}"),
             ));
         }
         Ok(filename)

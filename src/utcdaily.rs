@@ -8,7 +8,12 @@ use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 use serde::Serialize;
 use std::{
-    fs::File, io::Write, marker::PhantomData, path::PathBuf, sync::{mpsc, Arc, Mutex}, thread
+    fs::File,
+    io::Write,
+    marker::PhantomData,
+    path::PathBuf,
+    sync::{mpsc, Arc, Mutex},
+    thread,
 };
 
 /// Data storage configuration of some type. Currently, the type
@@ -107,12 +112,9 @@ impl<Kind: FmtInfo> UtcDaily<Kind> {
         }
         let writer = match self.writer.take() {
             Some(writer) => writer,
-            None => {
-                let writer = filename
-                    .clone()
-                    .get_writer_with_init(Kind::initialize, self.progname)?;
-                writer
-            }
+            None => filename
+                .clone()
+                .get_writer_with_init(Kind::initialize, self.progname)?,
         };
         self.set_writer(Some(writer));
         Ok(self.get_writer().unwrap())

@@ -1,7 +1,12 @@
 use lazy_static::lazy_static;
 use serde::Serialize;
 use std::{
-    fs::File, io::Write, marker::PhantomData, path::PathBuf, sync::{mpsc, Arc, Mutex}, thread
+    fs::File,
+    io::Write,
+    marker::PhantomData,
+    path::PathBuf,
+    sync::{mpsc, Arc, Mutex},
+    thread,
 };
 
 use chrono::{DateTime, Utc};
@@ -111,12 +116,9 @@ impl<Kind: FmtInfo> UtcHourly<Kind> {
         }
         let writer = match self.writer.take() {
             Some(writer) => writer,
-            None => {
-                let writer = filename
-                    .clone()
-                    .get_writer_with_init(Kind::initialize, self.progname)?;
-                writer
-            }
+            None => filename
+                .clone()
+                .get_writer_with_init(Kind::initialize, self.progname)?,
         };
         self.set_writer(Some(writer));
         Ok(self.get_writer().unwrap())
@@ -219,11 +221,10 @@ impl UtcHourly<Binary> {
     }
 }
 
-
 impl UtcHourly<Raw> {
     #[must_use = "Errors must be handled"]
     /// Store data without any delimiters.
-    /// 
+    ///
     /// # Arguments:
     /// - `tstamp`: Timestamp of the data frame, used to determine hourly and daily boundaries.
     /// - `data`: Data to be stored.

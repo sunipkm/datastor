@@ -27,17 +27,29 @@ pub(crate) trait UtcHourlyBoundary: UtcDailyBoundary {
     ) -> Result<CheckedFileName, std::io::Error> {
         let date = tstamp.format("%Y%m%d").to_string();
         let hour = tstamp.format("%H").to_string();
-        if self.get_last_date() != Some(&date) {
-            // Send the last directory to the compression thread
-            if let Some(tx) = &self.get_compressor() {
-                let _ = tx.send(Some(self.get_current_dir().clone()));
+
+        if match self.get_last_date() {
+            Some(last_date) => {
+                if last_date != date {
+                    // Send the last directory to the compression thread
+                    if let Some(tx) = &self.get_compressor() {
+                        let _ = tx.send(Some(self.get_current_dir().clone()));
+                    }
+                    true
+                } else {
+                    false
+                }
             }
+            None => true,
+        } {
+            // If the date has changed, create a new directory
             let current_dir = self.get_root_dir().join(&date);
             std::fs::create_dir_all(&current_dir)?;
             self.set_current_dir(current_dir);
             self.set_last_date(Some(date.clone()));
             self.set_last_hour(None);
         }
+
         if self.get_last_hour() != Some(&hour) {
             let current_dir = self.get_current_dir();
             let filename = if single {
@@ -75,10 +87,12 @@ pub(crate) trait UtcDailyBoundary {
         single: bool,
     ) -> Result<CheckedFileName, std::io::Error> {
         let date = tstamp.format("%Y%m%d").to_string();
-        if self.get_last_date() != Some(&date) {
-            // Send the last directory to the compression thread
-            if let Some(tx) = &self.get_compressor() {
-                let _ = tx.send(Some(self.get_current_dir().clone()));
+        if let Some(last_date) = self.get_last_date() {
+            if last_date != date {
+                // Send the last directory to the compression thread
+                if let Some(tx) = &self.get_compressor() {
+                    let _ = tx.send(Some(self.get_current_dir().clone()));
+                }
             }
         }
         let hour = tstamp.format("%H%M%S.%f").to_string();
@@ -192,13 +206,13 @@ pub(crate) fn get_compressor(
 
 pub(crate) fn compressor(rx: mpsc::Receiver<Option<PathBuf>>) -> JoinHandle<()> {
     thread::spawn(move || {
-        log::info!("Compression thread started");
+        log::trace!("Compression thread started");
         while let Ok(last_dir) = rx.recv() {
             if let Some(last_dir) = last_dir {
                 // wait for a directory to compress
                 let mut outfile = last_dir.clone(); // create the output file
                 outfile.set_extension("tar.gz");
-                log::info!("Compressing {last_dir:?} to {outfile:?}...");
+                log::debug!("Compressing {last_dir:?} to {outfile:?}...");
                 if let Ok(outfile) = File::create(outfile) {
                     // create the output file
                     let tar = GzEncoder::new(outfile, Compression::default()); // create the gzip encoder
@@ -219,7 +233,7 @@ pub(crate) fn compressor(rx: mpsc::Receiver<Option<PathBuf>>) -> JoinHandle<()> 
                                 // delete the input directory
                                 log::warn!("Error deleting directory {last_dir:?}: {e:?}");
                             } else {
-                                log::info!("Compression successful! Deleted {last_dir:?}");
+                                log::debug!("Compression successful! Deleted {last_dir:?}");
                             }
                         }
                         Err(e) => {
@@ -232,12 +246,12 @@ pub(crate) fn compressor(rx: mpsc::Receiver<Option<PathBuf>>) -> JoinHandle<()> 
                 break;
             }
         }
-        log::info!("Compression thread exiting");
+        log::trace!("Compression thread exiting");
     })
 }
 
 pub(crate) fn get_lock(rootdir: &Path, hash: u64) -> Result<LockFile, std::io::Error> {
-    let lockfile = rootdir.join(format!("{:016x}.lock", hash));
+    let lockfile = rootdir.join(format!("{hash:016x}.lock"));
     LockFile::new(lockfile)
 }
 
